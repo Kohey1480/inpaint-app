@@ -1,13 +1,8 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torchsummary import summary
 from skimage.feature import canny
-from skimage.color import rgb2gray, gray2rgb
-from scipy.misc import imread
-
+from skimage.color import rgb2gray
 import numpy as np
-from PIL import Image
 
 
 class InpaintNet(nn.Module):
@@ -51,8 +46,6 @@ class InpaintNet(nn.Module):
             nn.Conv2d(in_channels=64, out_channels=3, kernel_size=7, padding=0),
         )
 
-        # if init_weights:
-        #     self.init_weights()
 
     def forward(self, x):
         x = self.encoder(x)
@@ -104,8 +97,6 @@ class EdgeNet(nn.Module):
             nn.Conv2d(in_channels=64, out_channels=1, kernel_size=7, padding=0),
         )
 
-        # if init_weights:
-        #     self.init_weights()
 
     def forward(self, x):
         x = self.encoder(x)
@@ -143,34 +134,28 @@ def spectral_norm(module, mode=True):
 
     return module
 
-class Preprocessing():
+class InputImages():
     def __init__(self, image_masked, mask):
-        # image_masked = imread("./test/before/test.png") / 255
-        # mask = imread("./test/mask/test.png") / 255
         self.image_masked = image_masked
         self.mask = mask
         self.image_masked_gray = rgb2gray(image_masked)
         self.mask_gray = rgb2gray(mask)
 
+        #マスクとの栄目をベタ塗りにする
         self.image_masked = (self.image_masked * (1 - self.mask)) + self.mask
-        # image_masked_gray[mask.astype(np.bool)] = 1.0
         self.image_masked_gray = (self.image_masked_gray * (1 - self.mask_gray)) + self.mask_gray
 
+    def input_edgenet(self):
+        edge_masked = canny(self.image_masked_gray, sigma=2, mask=(1 - self.mask_gray).astype(np.bool)).astype(np.float)
+        image_masked_gray = self.image_masked_gray.reshape(1,1,512,512)
+        edge_masked = edge_masked.reshape(1,1,512,512)
+        mask_gray = self.mask_gray.reshape(1,1,512,512)
+        input_edge = torch.cat((torch.from_numpy(image_masked_gray), torch.from_numpy(edge_masked), torch.from_numpy(mask_gray)), dim=1)
+        return input_edge
 
-        pilImg = Image.fromarray(np.uint8(image_masked * 255))#デバッグ-保存用に255倍
-        # pilImg.save('yeaaaaaaa.png')
 
-        self.edge_masked = canny(self.image_masked_gray, sigma=2, mask=(1 - self.mask_gray).astype(np.bool)).astype(np.float)
-        # pilImg = Image.fromarray(np.uint8(image_masked_gray*255))#デバッグ-保存用に255倍
-        # pilImg.save('input.png')
-
-        self.image_masked_gray = self.image_masked_gray.reshape(1,1,512,512)
-        self.edge_masked = self.edge_masked.reshape(1,1,512,512)
-        self.mask_gray = self.mask_gray.reshape(1,1,512,512)
-
-        self.input_edge = torch.cat((torch.from_numpy(self.image_masked_gray), torch.from_numpy(self.edge_masked), torch.from_numpy(self.mask_gray)), dim=1)
-        # print(input_edge.shape)
-
-        #inpait 画像処理
-        self.image_masked = self.image_masked.transpose(2,0,1)
-        self.image_masked = self.image_masked[np.newaxis,:,:,:]
+    def input_inpaintnet(self, input_edge):
+        image_masked = self.image_masked.transpose(2, 0, 1)
+        image_masked = image_masked[np.newaxis, :, :, :]
+        input_inpaint = torch.cat((torch.from_numpy(image_masked).float(), input_edge), dim=1)
+        return input_inpaint
