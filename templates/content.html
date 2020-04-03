@@ -1,0 +1,62 @@
+<!--    <i class="fa fa-spinner fa-pulse fa-3x fa-fw waiting"></i>-->
+{%- extends "layout.html" %}
+{%- block content %}
+    <header style="height:30px">
+    </header>
+
+    <div id="content-before">
+
+        <label class="pointer" for="inImg" style="text-align: center;">                            <!-- アップローダー -->
+            <div id="uploader">
+                    <div class="uploadDropzone heightCentering_parent">
+                        <div class="heightCentering_child">
+                            <i class="fa material-icons cloud">cloud_upload</i>
+                            <h5>ファイルをアップロードしてください</h5>
+                        </div>
+                    </div>
+            </div>
+            <input type="file" id="inImg" accept="image/*" style="display:none;">
+        </label>
+
+        <div class="canvas" style="display: none;">                                                     <!--  お絵かきキャンバス  -->
+            <div id="cont">
+                <canvas id="cnvs1" width="512px" height="512px"></canvas>
+                <canvas id="cnvs2" width="512px" height="512px"></canvas>
+                <div id="loading" style="display: none;" class="heightCentering_child_parent">      <!-- wait..　画面 -->
+                        <div class="heightCentering_child">
+                            <i class="fa fa-spinner fa-pulse fa-5x fa-fw waiting"></i>
+                            <p>Please Wait...</p>
+                        </div>
+                </div>
+            </div>
+
+            <div id="canvasButton">
+                <input type="button" value="Change Image" id="changeImg" class="btn btn-outline-primary">                      <!--     (必)　修正!!!!              -->
+                <input type="button" value="Next" id="paint" class="mode1 btn btn-outline-primary">
+                <button id="sendImg" class="mode2 btn btn-outline-primary">Inpaiting!!</button>
+            </div>
+            <div id = "canvasDescription">
+                <h6 class="mode1">適切な位置に写真を動かしてください</h6>
+                <h6 class="mode2">隠したいものを塗ってください</h6>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div id="content-after" style="display: none; text-align: center">                              <!--  画像修復後  -->
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-sm-6" >
+                <img src="#" id="original-img" alt="">
+                <h5>Before</h5>
+            </div>
+            <div class="col-sm-6">
+                <img src="#" id="result-img" alt="">
+                <h5>After</h5>
+            </div>
+          </div>
+        </div>
+        <button onclick="location.reload();" class="mode2 btn btn-primary">もう一度</button>
+    </div>
+{%- endblock %}
