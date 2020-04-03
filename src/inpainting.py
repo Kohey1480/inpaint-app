@@ -1,3 +1,4 @@
+# https://github.com/knazeri/edge-connect
 import torch
 import torch.nn as nn
 from skimage.feature import canny
@@ -26,10 +27,12 @@ class InpaintNet(nn.Module):
             nn.ReLU(True)
         )
 
-        blocks = []
-        for _ in range(residual_blocks):
-            block = ResnetBlock(256, 2)
-            blocks.append(block)
+        blocks = [ResnetBlock(256, 2) for _ in range(residual_blocks)]
+
+        # blocks = []
+        # for _ in range(residual_blocks):
+        #     block = ResnetBlock(256, 2)
+        #     blocks.append(block)
 
         self.middle = nn.Sequential(*blocks)
 
@@ -57,7 +60,7 @@ class InpaintNet(nn.Module):
 
 
 class EdgeNet(nn.Module):
-    def __init__(self, use_spectral_norm=True):
+    def __init__(self, residual_blocks=8,use_spectral_norm=True):
         super(EdgeNet, self).__init__()
 
         self.weight = torch.load("./src/weight/EdgeModel_gen.pth", map_location=lambda storage, loc: storage)
@@ -77,10 +80,12 @@ class EdgeNet(nn.Module):
             nn.ReLU(True)
         )
 
-        blocks = []
-        for _ in range(8):
-            block = ResnetBlock(256, 2, use_spectral_norm=use_spectral_norm)
-            blocks.append(block)
+        # blocks = []
+        # for _ in range(8):
+        #     block = ResnetBlock(256, 2, use_spectral_norm=use_spectral_norm)
+        #     blocks.append(block)
+
+        blocks = [ResnetBlock(256, 2, use_spectral_norm=use_spectral_norm) for _ in range(residual_blocks)]
 
         self.middle = nn.Sequential(*blocks)
 

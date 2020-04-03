@@ -1,10 +1,7 @@
+# 現在使用してない
 from PIL import Image
-import matplotlib.pyplot as plt
-import numpy as np
 
 def Imgcombine4(time):
-    time = time
-    print(time)
     im00 = Image.open(f'./img/after/{time}-0-0.png')
     im01 = Image.open(f'./img/after/{time}-0-1.png')
     im10 = Image.open(f'./img/after/{time}-1-0.png')

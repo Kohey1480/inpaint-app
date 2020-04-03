@@ -7,13 +7,12 @@ from src.inpainting import InpaintNet, EdgeNet, InputImages
 import numpy as np
 import torch
 
+
 app = Flask(__name__)
 
-
 #NN作成
-
-#edge_netはマスクされた画像とマスクされた画像のエッジとマスクのみの画像から、マスクされた部分を含んだエッジを作成
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
+#edge_netはマスクされた画像とマスクされた画像のエッジとマスクのみの画像から、マスクされた部分を含んだエッジを作成
 edge_net = EdgeNet().to(device)
 edge_net.load_state_dict(edge_net.weight['generator'])
 
@@ -38,18 +37,18 @@ def inpaiting():
     #送信容量削減のためJSでリサイズしたかったが、上手く動作しないため、一旦サーバ側でリサイズ
     img_original = Image.open(BytesIO(dec_original))
     img_original = img_original.resize((512, 512))
-    img_masked = Image.open(BytesIO(dec_mask))
-    img_masked = img_masked.resize((512, 512))
+    img_mask = Image.open(BytesIO(dec_mask))
+    img_mask = img_mask.resize((512, 512))
 
     #画像にマスクをかける。(paint画像)
     c = Image.new('RGBA', img_original.size, (255, 255, 255, 0))
-    c.paste(img_masked, (0, 0), img_masked)
-    img_inpainted = Image.alpha_composite(img_original, c)
-    img_inpainted = img_original.convert("RGB")
+    c.paste(img_mask, (0, 0), img_mask)
+    img_masked = Image.alpha_composite(img_original, c)
     img_masked = img_masked.convert("RGB")
+    img_mask = img_mask.convert("RGB")
 
     #inpaining処理
-    img_setting = InputImages(np.array(img_inpainted)/255, np.array(img_masked)/255)
+    img_setting = InputImages(np.array(img_masked)/255, np.array(img_mask)/255)
     output_edge = edge_net(img_setting.input_edgenet().float())
     output_inpaint = inpaint_net(img_setting.input_inpaintnet(output_edge).float()).detach().numpy()
     output_inpaint = (output_inpaint * 255).astype(np.uint8).transpose(0, 2, 3, 1)
@@ -73,17 +72,7 @@ def inpaiting():
         'original': base64Img_original
     }
 
-
     return jsonify(ResultSet=res)
-
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port='5000')
-
-
-
-
-
-
-
